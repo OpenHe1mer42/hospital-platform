@@ -19,6 +19,10 @@ public class Diagnosis {
         this.updatedAt = updatedAt;
     }
 
+    public Diagnosis(int patientId, int doctorId, String prescription) {
+        this(null, patientId, doctorId, prescription, null, null);
+    }
+
     public int getId() {
         return id;
     }
