@@ -33,7 +33,7 @@ public class DiagnosisMapper {
         int doctorId = requestDTO.getDoctorId();
         String prescription = requestDTO.getPrescription();
 
-        return new Diagnosis(null, patientId, doctorId, prescription, null, null);
+        return new Diagnosis(patientId, doctorId, prescription);
     }
 
 

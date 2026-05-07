@@ -6,8 +6,8 @@ public class DiagnosisResponseDTO {
     private Integer patientId;
     private Integer doctorId;
     private String prescription;
-    Instant createdAt;
-    Instant updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
 
     public DiagnosisResponseDTO(Integer patientId, Integer doctorId, String prescription, Instant createdAt, Instant updatedAt) {
         this.patientId = patientId;
