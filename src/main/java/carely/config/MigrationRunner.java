@@ -14,9 +14,7 @@ import java.util.List;
 
 public class MigrationRunner {
     private static final List<String> MIGRATIONS = List.of(
-            "V001__create_users.sql",
-            "V002__add_profile_fields_to_users.sql",
-            "V003__point_foreign_keys_to_users.sql"
+            "V004__create_current_schema.sql"
     );
 
     public void runMigrations() {
