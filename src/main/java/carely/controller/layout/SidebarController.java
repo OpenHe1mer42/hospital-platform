@@ -30,6 +30,9 @@ public class SidebarController {
         brandIconSlot.getChildren().setAll(AssetLoader.imageView("logo.png", 30));
 
         for (PageRoute route : PageRoute.values()) {
+            if (!route.isSidebarVisible()) {
+                continue;
+            }
             Button button = createNavButton(route);
             navButtons.put(route, button);
             navContainer.getChildren().add(button);

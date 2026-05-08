@@ -49,6 +49,7 @@ public class MainLayoutController {
         loadShellControllers();
         sidebarController.setMainLayoutController(this);
         topbarController.setSidebarToggleHandler(this::toggleSidebar);
+        topbarController.setProfileClickHandler(() -> navigateTo(PageRoute.PROFILE));
         topbarController.refreshUser();
         navigateTo(PageRoute.DASHBOARD);
     }

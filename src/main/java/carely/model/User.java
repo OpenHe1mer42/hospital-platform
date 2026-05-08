@@ -1,12 +1,16 @@
 package carely.model;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class User {
     private Long id;
     private String fullName;
     private String email;
     private String passwordHash;
+    private String phone;
+    private String gender;
+    private LocalDate dateOfBirth;
     private UserRole role;
     private boolean active = true;
     private LocalDateTime createdAt;
@@ -42,6 +46,30 @@ public class User {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
     }
 
     public UserRole getRole() {

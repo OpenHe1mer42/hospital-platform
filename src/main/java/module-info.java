@@ -8,6 +8,7 @@ module carely {
     opens carely to javafx.fxml;
     opens carely.controller.auth to javafx.fxml;
     opens carely.controller.layout to javafx.fxml;
+    opens carely.controller.pages to javafx.fxml;
     exports carely;
     exports carely.config;
     exports carely.mapper;

@@ -35,11 +35,13 @@
     </StackPane>
     <StackPane fx:id="helpIconSlot" minWidth="38" minHeight="38" prefWidth="38" prefHeight="38" styleClass="topbar-icon-button"/>
     <HBox alignment="CENTER_LEFT" spacing="10" styleClass="profile-pill">
-        <Label fx:id="avatarLabel" text="CU" alignment="CENTER" minWidth="38" minHeight="38" styleClass="avatar"/>
-        <VBox spacing="1">
-            <Label fx:id="userNameLabel" text="Carely User" styleClass="profile-name"/>
-            <Label fx:id="userRoleLabel" text="Role" styleClass="profile-role"/>
-        </VBox>
+        <HBox alignment="CENTER_LEFT" spacing="10" onMouseClicked="#onOpenProfile" styleClass="profile-click-target">
+            <Label fx:id="avatarLabel" text="CU" alignment="CENTER" minWidth="38" minHeight="38" styleClass="avatar"/>
+            <VBox spacing="1">
+                <Label fx:id="userNameLabel" text="Carely User" styleClass="profile-name"/>
+                <Label fx:id="userRoleLabel" text="Role" styleClass="profile-role"/>
+            </VBox>
+        </HBox>
         <Button text="Logout" onAction="#onLogout" styleClass="profile-logout-button"/>
     </HBox>
 </HBox>
