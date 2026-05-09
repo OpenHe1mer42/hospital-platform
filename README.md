@@ -36,13 +36,18 @@ The default `src/main/resources/database.properties` already points to:
 db.url=jdbc:mariadb://127.0.0.1:3307/carely
 db.username=root
 db.password=
+db.pool.maximumPoolSize=10
+db.pool.minimumIdle=2
 ```
 
 The app uses `carely.config.DatabaseConfig` as the shared
-connection module. Any repository or service that needs the database should call:
+connection module. It owns a HikariCP connection pool, so repositories borrow a
+connection per operation and return it automatically with `try-with-resources`:
 
 ```java
-Connection connection = DatabaseConfig.getConnection();
+try (Connection connection = DatabaseConfig.getConnection()) {
+    // query/update here
+}
 ```
 
 Local credentials can be kept in `.env`:
@@ -51,6 +56,8 @@ Local credentials can be kept in `.env`:
 DB_URL=jdbc:mariadb://127.0.0.1:3307/carely
 DB_USERNAME=root
 DB_PASSWORD=
+DB_POOL_MAX_SIZE=10
+DB_POOL_MIN_IDLE=2
 ```
 
 Actual environment variables override `.env`, and `.env` overrides

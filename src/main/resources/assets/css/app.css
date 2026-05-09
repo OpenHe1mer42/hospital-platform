@@ -12,12 +12,12 @@
     -fx-background-image: url("../images/hospital.png");
     -fx-background-size: cover;
     -fx-background-position: center;
-    -fx-min-width: 560px;
+    -fx-min-width: 600px;
 }
 
 .auth-hero-copy {
     -fx-padding: 120 0 0 66;
-    -fx-max-width: 430px;
+    -fx-max-width: 500px;
 }
 
 .auth-hero-title {
@@ -33,14 +33,18 @@
 }
 
 .auth-feature-stack {
-    -fx-translate-x: -245px;
-    -fx-translate-y: 110px;
+
+    -fx-translate-x: 67px;
+    -fx-translate-y: 10px;
 }
 
 .auth-feature-pill {
     -fx-background-color: rgba(255, 255, 255, 0.88);
     -fx-background-radius: 10;
     -fx-padding: 14 18;
+    -fx-pref-width: 160px;
+          -fx-min-width: 160px;
+          -fx-max-width: 160px;
     -fx-font-size: 12px;
     -fx-font-weight: 700;
     -fx-text-fill: #24506f;

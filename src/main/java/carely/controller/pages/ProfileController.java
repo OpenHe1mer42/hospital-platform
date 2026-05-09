@@ -5,6 +5,7 @@ import carely.error.RepositoryException;
 import carely.error.ValidationException;
 import carely.model.User;
 import carely.service.ProfileService;
+import carely.utils.BackgroundTasks;
 import carely.utils.ViewNavigator;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -99,70 +100,70 @@ public class ProfileController {
     private void onSaveProfile() {
         clearMessage(profileMessageLabel);
         saveProfileButton.setDisable(true);
-        try {
-            User user = profileService.updateProfile(
-                    fullNameField.getText(),
-                    emailField.getText(),
-                    phoneField.getText(),
-                    genderComboBox.getValue(),
-                    dateOfBirthPicker.getValue()
-            );
-            renderUser(user);
-            showSuccess(profileMessageLabel, "Profile updated.");
-        } catch (ValidationException | AuthenticationException exception) {
-            showError(profileMessageLabel, exception.getMessage());
-        } catch (RepositoryException exception) {
-            showError(profileMessageLabel, "Profile could not be saved. Check the database connection.");
-        } finally {
-            saveProfileButton.setDisable(false);
-        }
+        BackgroundTasks.run(
+                () -> profileService.updateProfile(
+                        fullNameField.getText(),
+                        emailField.getText(),
+                        phoneField.getText(),
+                        genderComboBox.getValue(),
+                        dateOfBirthPicker.getValue()
+                ),
+                user -> {
+                    renderUser(user);
+                    showSuccess(profileMessageLabel, "Profile updated.");
+                },
+                exception -> showProfileFailure(profileMessageLabel, exception, "Profile could not be saved. Check the database connection."),
+                () -> saveProfileButton.setDisable(false)
+        );
     }
 
     @FXML
     private void onChangePassword() {
         clearMessage(passwordMessageLabel);
         changePasswordButton.setDisable(true);
-        try {
-            profileService.changePassword(
-                    currentPasswordField.getText(),
-                    newPasswordField.getText(),
-                    confirmPasswordField.getText()
-            );
-            currentPasswordField.clear();
-            newPasswordField.clear();
-            confirmPasswordField.clear();
-            showSuccess(passwordMessageLabel, "Password changed.");
-        } catch (ValidationException | AuthenticationException exception) {
-            showError(passwordMessageLabel, exception.getMessage());
-        } catch (RepositoryException exception) {
-            showError(passwordMessageLabel, "Password could not be changed. Check the database connection.");
-        } finally {
-            changePasswordButton.setDisable(false);
-        }
+        BackgroundTasks.run(
+                () -> {
+                    profileService.changePassword(
+                            currentPasswordField.getText(),
+                            newPasswordField.getText(),
+                            confirmPasswordField.getText()
+                    );
+                    return null;
+                },
+                ignored -> {
+                    currentPasswordField.clear();
+                    newPasswordField.clear();
+                    confirmPasswordField.clear();
+                    showSuccess(passwordMessageLabel, "Password changed.");
+                },
+                exception -> showProfileFailure(passwordMessageLabel, exception, "Password could not be changed. Check the database connection."),
+                () -> changePasswordButton.setDisable(false)
+        );
     }
 
     @FXML
     private void onDeactivateAccount() {
         clearMessage(actionMessageLabel);
         deactivateButton.setDisable(true);
-        try {
-            profileService.deactivateCurrentAccount(deactivateConfirmationField.getText());
-            ViewNavigator.showLogin();
-        } catch (ValidationException | AuthenticationException exception) {
-            showError(actionMessageLabel, exception.getMessage());
-        } catch (RepositoryException exception) {
-            showError(actionMessageLabel, "Account could not be deactivated. Check the database connection.");
-        } finally {
-            deactivateButton.setDisable(false);
-        }
+        BackgroundTasks.run(
+                () -> {
+                    profileService.deactivateCurrentAccount(deactivateConfirmationField.getText());
+                    return null;
+                },
+                ignored -> ViewNavigator.showLogin(),
+                exception -> showProfileFailure(actionMessageLabel, exception, "Account could not be deactivated. Check the database connection."),
+                () -> deactivateButton.setDisable(false)
+        );
     }
 
     private void loadProfile() {
-        try {
-            renderUser(profileService.loadCurrentUser());
-        } catch (RuntimeException exception) {
-            showError(profileMessageLabel, "Profile could not be loaded.");
-        }
+        BackgroundTasks.run(
+                profileService::loadCurrentUser,
+                this::renderUser,
+                exception -> showError(profileMessageLabel, "Profile could not be loaded."),
+                () -> {
+                }
+        );
     }
 
     private void renderUser(User user) {
@@ -199,6 +200,16 @@ public class ProfileController {
         label.getStyleClass().removeAll("message-success");
         if (!label.getStyleClass().contains("message-error")) {
             label.getStyleClass().add("message-error");
+        }
+    }
+
+    private void showProfileFailure(Label label, Throwable exception, String repositoryMessage) {
+        if (exception instanceof ValidationException || exception instanceof AuthenticationException) {
+            showError(label, exception.getMessage());
+        } else if (exception instanceof RepositoryException) {
+            showError(label, repositoryMessage);
+        } else {
+            showError(label, "Something went wrong.");
         }
     }
 

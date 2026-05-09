@@ -7,6 +7,7 @@ import carely.model.User;
 import carely.service.AuthService;
 import carely.service.AuthSession;
 import carely.utils.AssetLoader;
+import carely.utils.BackgroundTasks;
 import carely.utils.ViewNavigator;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -46,22 +47,12 @@ public class LoginController {
     private void onLogin() {
         clearMessage();
         loginButton.setDisable(true);
-        try {
-            User user = authService.login(emailField.getText(), passwordField.getText());
-            AuthSession.start(user);
-            ViewNavigator.showMainLayout();
-        } catch (ValidationException | AuthenticationException exception) {
-            showError(exception.getMessage());
-            ViewNavigator.showErrorDialog("Login failed", exception.getMessage());
-        } catch (RepositoryException exception) {
-            showError("Database connection failed. Check your Carely database settings.");
-            ViewNavigator.showErrorDialog("Login failed", "Database connection failed. Check your Carely database settings.");
-        } catch (RuntimeException exception) {
-            showError("Login worked, but the main page could not be opened.");
-            ViewNavigator.showErrorDialog("Navigation failed", "Login worked, but the main page could not be opened: " + rootCauseMessage(exception));
-        } finally {
-            loginButton.setDisable(false);
-        }
+        BackgroundTasks.run(
+                () -> authService.login(emailField.getText(), passwordField.getText()),
+                this::openMainLayout,
+                this::showLoginFailure,
+                () -> loginButton.setDisable(false)
+        );
     }
 
     @FXML
@@ -79,6 +70,29 @@ public class LoginController {
         messageLabel.getStyleClass().removeAll("message-success");
         if (!messageLabel.getStyleClass().contains("message-error")) {
             messageLabel.getStyleClass().add("message-error");
+        }
+    }
+
+    private void openMainLayout(User user) {
+        try {
+            AuthSession.start(user);
+            ViewNavigator.showMainLayout();
+        } catch (RuntimeException exception) {
+            showError("Login worked, but the main page could not be opened.");
+            ViewNavigator.showErrorDialog("Navigation failed", "Login worked, but the main page could not be opened: " + rootCauseMessage(exception));
+        }
+    }
+
+    private void showLoginFailure(Throwable exception) {
+        if (exception instanceof ValidationException || exception instanceof AuthenticationException) {
+            showError(exception.getMessage());
+            ViewNavigator.showErrorDialog("Login failed", exception.getMessage());
+        } else if (exception instanceof RepositoryException) {
+            showError("Database connection failed. Check your Carely database settings.");
+            ViewNavigator.showErrorDialog("Login failed", "Database connection failed. Check your Carely database settings.");
+        } else {
+            showError("Login failed.");
+            ViewNavigator.showErrorDialog("Login failed", rootCauseMessage(exception));
         }
     }
 

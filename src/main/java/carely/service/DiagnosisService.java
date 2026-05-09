@@ -1,20 +1,21 @@
 package carely.service;
 
-import carely.model.dto.diagnosis.DiagnosisRequestDTO;
 import carely.mapper.DiagnosisMapper;
 import carely.model.Diagnosis;
+import carely.model.dto.diagnosis.DiagnosisRequestDTO;
 import carely.repository.DiagnosisRepository;
 
-import java.sql.SQLException;
-
 public class DiagnosisService {
-
-    DiagnosisMapper mapper;
-    DiagnosisRepository repository;
+    private final DiagnosisMapper mapper;
+    private final DiagnosisRepository repository;
 
     public DiagnosisService() {
-        this.mapper = new DiagnosisMapper();
-        this.repository = new DiagnosisRepository();
+        this(new DiagnosisMapper(), new DiagnosisRepository());
+    }
+
+    public DiagnosisService(DiagnosisMapper mapper, DiagnosisRepository repository) {
+        this.mapper = mapper;
+        this.repository = repository;
     }
 
     public Diagnosis create(DiagnosisRequestDTO requestDTO) throws RuntimeException {
@@ -37,12 +38,12 @@ public class DiagnosisService {
         this.validate(id);
         boolean deleted = this.repository.delete(id);
 
-        if(!deleted) {
+        if (!deleted) {
             throw new RuntimeException("Diagnosis not found!");
         }
 
         return deleted;
-}
+    }
 
     public Diagnosis getById(Integer id) throws RuntimeException {
         this.validate(id);
@@ -51,17 +52,17 @@ public class DiagnosisService {
     }
 
     private void validate(DiagnosisRequestDTO requestDTO) throws IllegalArgumentException {
-        if(requestDTO.getDoctorId() == null) {
+        if (requestDTO.getDoctorId() == null) {
             throw new IllegalArgumentException("Doctor ID must not be null!");
-        } else if(requestDTO.getPatientId() == null) {
+        } else if (requestDTO.getPatientId() == null) {
             throw new IllegalArgumentException("Patient ID must not be null!");
-        } else if(requestDTO.getPrescription() == null || requestDTO.getPrescription().isEmpty()) {
+        } else if (requestDTO.getPrescription() == null || requestDTO.getPrescription().isEmpty()) {
             throw new IllegalArgumentException("Prescription must not be null or empty!");
         }
     }
 
     private void validate(Integer id) throws IllegalArgumentException {
-        if(id == null) {
+        if (id == null) {
             throw new IllegalArgumentException("ID must not be null");
         }
     }

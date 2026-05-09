@@ -1,17 +1,29 @@
 package carely.repository;
 
+import carely.config.DatabaseConfig;
 import carely.error.RepositoryException;
 import carely.model.Diagnosis;
-import carely.service.DatabaseService;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.Objects;
 
 public class DiagnosisRepository implements IRepository<Diagnosis> {
+    private final DataSource dataSource;
+
+    public DiagnosisRepository() {
+        this(DatabaseConfig.getDataSource());
+    }
+
+    public DiagnosisRepository(DataSource dataSource) {
+        this.dataSource = Objects.requireNonNull(dataSource, "dataSource");
+    }
+
     @Override
     public Diagnosis create(Diagnosis diagnosis) {
         String sql = """
@@ -19,18 +31,16 @@ public class DiagnosisRepository implements IRepository<Diagnosis> {
                 VALUES (?, ?, ?)
                 """;
 
-        try {
-            Connection connection = getConnection();
-            try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                statement.setLong(1, diagnosis.getPatientId());
-                statement.setLong(2, diagnosis.getDoctorId());
-                statement.setString(3, diagnosis.getPrescription());
-                statement.executeUpdate();
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setLong(1, diagnosis.getPatientId());
+            statement.setLong(2, diagnosis.getDoctorId());
+            statement.setString(3, diagnosis.getPrescription());
+            statement.executeUpdate();
 
-                try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        return getById(generatedKeys.getInt(1));
-                    }
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return getById(connection, generatedKeys.getInt(1));
                 }
             }
         } catch (SQLException exception) {
@@ -48,72 +58,63 @@ public class DiagnosisRepository implements IRepository<Diagnosis> {
                 WHERE id = ?
                 """;
 
-        try {
-            Connection connection = getConnection();
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setLong(1, diagnosis.getPatientId());
-                statement.setLong(2, diagnosis.getDoctorId());
-                statement.setString(3, diagnosis.getPrescription());
-                statement.setInt(4, diagnosis.getId());
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, diagnosis.getPatientId());
+            statement.setLong(2, diagnosis.getDoctorId());
+            statement.setString(3, diagnosis.getPrescription());
+            statement.setInt(4, diagnosis.getId());
 
-                if (statement.executeUpdate() == 0) {
-                    throw new RepositoryException("Diagnosis not found.");
-                }
+            if (statement.executeUpdate() == 0) {
+                throw new RepositoryException("Diagnosis not found.");
             }
+
+            return getById(connection, diagnosis.getId());
         } catch (SQLException exception) {
             throw new RepositoryException("Failed to update diagnosis.", exception);
         }
-
-        return getById(diagnosis.getId());
     }
 
     @Override
     public Diagnosis getById(int id) {
-        String sql = """
-                SELECT id, patient_id, doctor_id, prescription, created_at, updated_at
-                FROM diagnosis
-                WHERE id = ?
-                """;
-
-        try {
-            Connection connection = getConnection();
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setInt(1, id);
-
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    if (resultSet.next()) {
-                        return mapRow(resultSet);
-                    }
-                }
-            }
+        try (Connection connection = dataSource.getConnection()) {
+            return getById(connection, id);
         } catch (SQLException exception) {
             throw new RepositoryException("Failed to load diagnosis.", exception);
         }
-
-        return null;
     }
 
     @Override
     public boolean delete(int id) {
         String sql = "DELETE FROM diagnosis WHERE id = ?";
 
-        try {
-            Connection connection = getConnection();
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setInt(1, id);
-                return statement.executeUpdate() > 0;
-            }
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            return statement.executeUpdate() > 0;
         } catch (SQLException exception) {
             throw new RepositoryException("Failed to delete diagnosis.", exception);
         }
     }
 
-    private Connection getConnection() {
-        Connection connection = DatabaseService.getConnection();
-        if (connection == null) {
-            throw new RepositoryException("Database connection is not configured or could not be opened.");
+    private Diagnosis getById(Connection connection, int id) throws SQLException {
+        String sql = """
+                SELECT id, patient_id, doctor_id, prescription, created_at, updated_at
+                FROM diagnosis
+                WHERE id = ?
+                """;
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapRow(resultSet);
+                }
+            }
         }
-        return connection;
+
+        return null;
     }
 
     private Diagnosis mapRow(ResultSet resultSet) throws SQLException {

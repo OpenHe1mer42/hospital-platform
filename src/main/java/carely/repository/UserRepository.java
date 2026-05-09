@@ -5,6 +5,7 @@ import carely.error.RepositoryException;
 import carely.model.User;
 import carely.model.UserRole;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,16 +14,27 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.Optional;
 
 public class UserRepository {
+    private final DataSource dataSource;
+
+    public UserRepository() {
+        this(DatabaseConfig.getDataSource());
+    }
+
+    public UserRepository(DataSource dataSource) {
+        this.dataSource = Objects.requireNonNull(dataSource, "dataSource");
+    }
+
     public User create(User user) {
         String sql = """
                 INSERT INTO users (full_name, email, password_hash, role, is_active)
                 VALUES (?, ?, ?, ?, ?)
                 """;
 
-        try (Connection connection = DatabaseConfig.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, user.getFullName());
             statement.setString(2, user.getEmail());
@@ -33,7 +45,7 @@ public class UserRepository {
 
             try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    return findById(generatedKeys.getLong(1))
+                    return findById(connection, generatedKeys.getLong(1))
                             .orElseThrow(() -> new RepositoryException("Created user could not be loaded."));
                 }
             }
@@ -45,25 +57,11 @@ public class UserRepository {
     }
 
     public Optional<User> findById(Long id) {
-        String sql = """
-                SELECT id, full_name, email, password_hash, phone, gender, date_of_birth, role, is_active, created_at, updated_at
-                FROM users
-                WHERE id = ?
-                """;
-
-        try (Connection connection = DatabaseConfig.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setLong(1, id);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return Optional.of(mapRow(resultSet));
-                }
-            }
+        try (Connection connection = dataSource.getConnection()) {
+            return findById(connection, id);
         } catch (SQLException exception) {
             throw new RepositoryException("Failed to load user.", exception);
         }
-
-        return Optional.empty();
     }
 
     public Optional<User> findByEmail(String email) {
@@ -73,7 +71,7 @@ public class UserRepository {
                 WHERE LOWER(email) = LOWER(?)
                 """;
 
-        try (Connection connection = DatabaseConfig.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, email);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -91,7 +89,7 @@ public class UserRepository {
     public boolean existsByEmail(String email) {
         String sql = "SELECT 1 FROM users WHERE LOWER(email) = LOWER(?)";
 
-        try (Connection connection = DatabaseConfig.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, email);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -110,7 +108,7 @@ public class UserRepository {
                   AND id <> ?
                 """;
 
-        try (Connection connection = DatabaseConfig.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, email);
             statement.setLong(2, userId);
@@ -133,7 +131,7 @@ public class UserRepository {
                 WHERE id = ?
                 """;
 
-        try (Connection connection = DatabaseConfig.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, user.getFullName());
             statement.setString(2, user.getEmail());
@@ -146,7 +144,7 @@ public class UserRepository {
                 throw new RepositoryException("Profile could not be updated because the user was not found.");
             }
 
-            return findById(user.getId())
+            return findById(connection, user.getId())
                     .orElseThrow(() -> new RepositoryException("Updated user could not be loaded."));
         } catch (SQLException exception) {
             throw new RepositoryException("Failed to update profile.", exception);
@@ -156,7 +154,7 @@ public class UserRepository {
     public void updatePassword(Long userId, String passwordHash) {
         String sql = "UPDATE users SET password_hash = ? WHERE id = ?";
 
-        try (Connection connection = DatabaseConfig.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, passwordHash);
             statement.setLong(2, userId);
@@ -172,7 +170,7 @@ public class UserRepository {
     public User deactivate(Long userId) {
         String sql = "UPDATE users SET is_active = FALSE WHERE id = ?";
 
-        try (Connection connection = DatabaseConfig.getConnection();
+        try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, userId);
 
@@ -180,11 +178,30 @@ public class UserRepository {
                 throw new RepositoryException("Account could not be deactivated because the user was not found.");
             }
 
-            return findById(userId)
+            return findById(connection, userId)
                     .orElseThrow(() -> new RepositoryException("Deactivated user could not be loaded."));
         } catch (SQLException exception) {
             throw new RepositoryException("Failed to deactivate account.", exception);
         }
+    }
+
+    private Optional<User> findById(Connection connection, Long id) throws SQLException {
+        String sql = """
+                SELECT id, full_name, email, password_hash, phone, gender, date_of_birth, role, is_active, created_at, updated_at
+                FROM users
+                WHERE id = ?
+                """;
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return Optional.of(mapRow(resultSet));
+                }
+            }
+        }
+
+        return Optional.empty();
     }
 
     private User mapRow(ResultSet resultSet) throws SQLException {

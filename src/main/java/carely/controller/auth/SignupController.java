@@ -7,6 +7,7 @@ import carely.model.UserRole;
 import carely.service.AuthService;
 import carely.service.AuthSession;
 import carely.utils.AssetLoader;
+import carely.utils.BackgroundTasks;
 import carely.utils.ViewNavigator;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -63,28 +64,18 @@ public class SignupController {
         }
 
         signupButton.setDisable(true);
-        try {
-            User user = authService.signup(
+        BackgroundTasks.run(
+                () -> authService.signup(
                     fullNameField.getText(),
                     emailField.getText(),
                     passwordField.getText(),
                     confirmPasswordField.getText(),
                     roleComboBox.getValue()
-            );
-            AuthSession.start(user);
-            ViewNavigator.showMainLayout();
-        } catch (ValidationException exception) {
-            showError(exception.getMessage());
-            ViewNavigator.showErrorDialog("Signup failed", exception.getMessage());
-        } catch (RepositoryException exception) {
-            showError("Database connection failed. Check your Carely database settings.");
-            ViewNavigator.showErrorDialog("Signup failed", "Database connection failed. Check your Carely database settings.");
-        } catch (RuntimeException exception) {
-            showError("Account created, but the main page could not be opened.");
-            ViewNavigator.showErrorDialog("Navigation failed", "Account created, but the main page could not be opened: " + rootCauseMessage(exception));
-        } finally {
-            signupButton.setDisable(false);
-        }
+                ),
+                this::openMainLayout,
+                this::showSignupFailure,
+                () -> signupButton.setDisable(false)
+        );
     }
 
     @FXML
@@ -102,6 +93,29 @@ public class SignupController {
         messageLabel.getStyleClass().removeAll("message-success");
         if (!messageLabel.getStyleClass().contains("message-error")) {
             messageLabel.getStyleClass().add("message-error");
+        }
+    }
+
+    private void openMainLayout(User user) {
+        try {
+            AuthSession.start(user);
+            ViewNavigator.showMainLayout();
+        } catch (RuntimeException exception) {
+            showError("Account created, but the main page could not be opened.");
+            ViewNavigator.showErrorDialog("Navigation failed", "Account created, but the main page could not be opened: " + rootCauseMessage(exception));
+        }
+    }
+
+    private void showSignupFailure(Throwable exception) {
+        if (exception instanceof ValidationException) {
+            showError(exception.getMessage());
+            ViewNavigator.showErrorDialog("Signup failed", exception.getMessage());
+        } else if (exception instanceof RepositoryException) {
+            showError("Database connection failed. Check your Carely database settings.");
+            ViewNavigator.showErrorDialog("Signup failed", "Database connection failed. Check your Carely database settings.");
+        } else {
+            showError("Signup failed.");
+            ViewNavigator.showErrorDialog("Signup failed", rootCauseMessage(exception));
         }
     }
 

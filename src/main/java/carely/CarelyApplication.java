@@ -2,6 +2,7 @@ package carely;
 
 import carely.config.DatabaseConfig;
 import carely.config.MigrationRunner;
+import carely.utils.BackgroundTasks;
 import carely.utils.ViewNavigator;
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -23,5 +24,11 @@ public class CarelyApplication extends Application {
         stage.setMinWidth(1024);
         stage.setMinHeight(640);
         ViewNavigator.showLogin();
+    }
+
+    @Override
+    public void stop() {
+        BackgroundTasks.shutdown();
+        DatabaseConfig.closeDataSource();
     }
 }

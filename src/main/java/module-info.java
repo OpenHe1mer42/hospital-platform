@@ -1,9 +1,9 @@
 module carely {
+    requires com.zaxxer.hikari;
     requires java.sql;
     requires jbcrypt;
     requires javafx.controls;
     requires javafx.fxml;
-
 
     opens carely to javafx.fxml;
     opens carely.controller.auth to javafx.fxml;

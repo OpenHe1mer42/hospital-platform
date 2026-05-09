@@ -1,11 +1,14 @@
 package carely.config;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -14,12 +17,27 @@ public final class DatabaseConfig {
     private static final String DOTENV_FILE = ".env";
     private static final Properties DOTENV = loadDotenv();
     private static final Properties PROPERTIES = loadProperties();
+    private static HikariDataSource dataSource;
 
     private DatabaseConfig() {
     }
 
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(getUrl(), getUsername(), getPassword());
+        return getDataSource().getConnection();
+    }
+
+    public static synchronized DataSource getDataSource() {
+        if (dataSource == null) {
+            dataSource = new HikariDataSource(createPoolConfig());
+        }
+        return dataSource;
+    }
+
+    public static synchronized void closeDataSource() {
+        if (dataSource != null) {
+            dataSource.close();
+            dataSource = null;
+        }
     }
 
     public static String getUrl() {
@@ -40,6 +58,20 @@ public final class DatabaseConfig {
         return "true".equalsIgnoreCase(value) || "1".equals(value);
     }
 
+    private static HikariConfig createPoolConfig() {
+        HikariConfig config = new HikariConfig();
+        config.setPoolName(getOptionalSetting("DB_POOL_NAME", "db.pool.name", "CarelyPool"));
+        config.setJdbcUrl(getUrl());
+        config.setUsername(getUsername());
+        config.setPassword(getPassword());
+        config.setMaximumPoolSize(getIntSetting("DB_POOL_MAX_SIZE", "db.pool.maximumPoolSize", 10));
+        config.setMinimumIdle(getIntSetting("DB_POOL_MIN_IDLE", "db.pool.minimumIdle", 2));
+        config.setConnectionTimeout(getLongSetting("DB_POOL_CONNECTION_TIMEOUT_MS", "db.pool.connectionTimeoutMs", 30000));
+        config.setIdleTimeout(getLongSetting("DB_POOL_IDLE_TIMEOUT_MS", "db.pool.idleTimeoutMs", 600000));
+        config.setMaxLifetime(getLongSetting("DB_POOL_MAX_LIFETIME_MS", "db.pool.maxLifetimeMs", 1800000));
+        return config;
+    }
+
     private static String getSetting(String environmentKey, String propertyKey) {
         String value = getOptionalSetting(environmentKey, propertyKey);
         if (value == null || value.isBlank()) {
@@ -58,6 +90,35 @@ public final class DatabaseConfig {
             return dotenvValue;
         }
         return PROPERTIES.getProperty(propertyKey);
+    }
+
+    private static String getOptionalSetting(String environmentKey, String propertyKey, String defaultValue) {
+        String value = getOptionalSetting(environmentKey, propertyKey);
+        return value == null || value.isBlank() ? defaultValue : value;
+    }
+
+    private static int getIntSetting(String environmentKey, String propertyKey, int defaultValue) {
+        String value = getOptionalSetting(environmentKey, propertyKey);
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException exception) {
+            throw new IllegalStateException("Invalid integer database setting: " + environmentKey + " or " + propertyKey, exception);
+        }
+    }
+
+    private static long getLongSetting(String environmentKey, String propertyKey, long defaultValue) {
+        String value = getOptionalSetting(environmentKey, propertyKey);
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException exception) {
+            throw new IllegalStateException("Invalid long database setting: " + environmentKey + " or " + propertyKey, exception);
+        }
     }
 
     private static Properties loadDotenv() {
