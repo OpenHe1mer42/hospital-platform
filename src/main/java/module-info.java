@@ -1,8 +1,20 @@
-module com.example.hospitalproject {
+module carely {
+    requires com.zaxxer.hikari;
+    requires java.sql;
+    requires jbcrypt;
     requires javafx.controls;
     requires javafx.fxml;
 
-
-    opens com.example.hospitalproject to javafx.fxml;
-    exports com.example.hospitalproject;
+    opens carely to javafx.fxml;
+    opens carely.controller.auth to javafx.fxml;
+    opens carely.controller.layout to javafx.fxml;
+    opens carely.controller.pages to javafx.fxml;
+    exports carely;
+    exports carely.config;
+    exports carely.mapper;
+    exports carely.model;
+    exports carely.model.dto.diagnosis;
+    exports carely.repository;
+    exports carely.service;
+    exports carely.utils;
 }

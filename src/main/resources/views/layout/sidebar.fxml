@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="carely.controller.layout.SidebarController"
+      prefWidth="250"
+      minWidth="250"
+      maxWidth="250"
+      spacing="22"
+      styleClass="sidebar">
+    <padding>
+        <Insets top="24" right="18" bottom="24" left="18"/>
+    </padding>
+    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="sidebar-brand-row">
+        <StackPane fx:id="brandIconSlot" minWidth="38" minHeight="38" prefWidth="38" prefHeight="38" styleClass="sidebar-brand-icon"/>
+        <VBox spacing="1">
+            <Label text="Carely" styleClass="sidebar-brand-title"/>
+            <Label text="Hospital platform" styleClass="sidebar-brand-subtitle"/>
+        </VBox>
+    </HBox>
+    <VBox fx:id="navContainer" spacing="7" styleClass="sidebar-nav"/>
+</VBox>
