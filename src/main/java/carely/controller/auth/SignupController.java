@@ -3,17 +3,14 @@ package carely.controller.auth;
 import carely.error.RepositoryException;
 import carely.error.ValidationException;
 import carely.model.User;
-import carely.model.UserRole;
 import carely.service.AuthService;
 import carely.service.AuthSession;
 import carely.utils.AssetLoader;
 import carely.utils.BackgroundTasks;
 import carely.utils.ViewNavigator;
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -35,9 +32,6 @@ public class SignupController {
     private PasswordField confirmPasswordField;
 
     @FXML
-    private ComboBox<UserRole> roleComboBox;
-
-    @FXML
     private CheckBox termsCheckBox;
 
     @FXML
@@ -52,7 +46,6 @@ public class SignupController {
     @FXML
     private void initialize() {
         signupLogoSlot.getChildren().setAll(AssetLoader.imageView("logo.png", 96));
-        roleComboBox.setItems(FXCollections.observableArrayList(UserRole.values()));
     }
 
     @FXML
@@ -69,8 +62,7 @@ public class SignupController {
                     fullNameField.getText(),
                     emailField.getText(),
                     passwordField.getText(),
-                    confirmPasswordField.getText(),
-                    roleComboBox.getValue()
+                    confirmPasswordField.getText()
                 ),
                 this::openMainLayout,
                 this::showSignupFailure,

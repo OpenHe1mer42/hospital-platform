@@ -1,6 +1,8 @@
 package carely.utils;
 
+import carely.controller.layout.MainLayoutController;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -18,6 +20,7 @@ public final class ViewNavigator {
     private static Stage stage;
     private static Scene authScene;
     private static Scene mainScene;
+    private static MainLayoutController mainLayoutController;
 
     private ViewNavigator() {
     }
@@ -38,6 +41,23 @@ public final class ViewNavigator {
         show("/views/layout/main-layout.fxml", SceneGroup.MAIN);
     }
 
+    public static void registerMainLayoutController(MainLayoutController controller) {
+        mainLayoutController = controller;
+    }
+
+    public static void showGlobalModal(Node content) {
+        if (mainLayoutController == null) {
+            throw new IllegalStateException("Main layout is not available for modal display.");
+        }
+        mainLayoutController.showGlobalModal(content);
+    }
+
+    public static void hideGlobalModal() {
+        if (mainLayoutController != null) {
+            mainLayoutController.hideGlobalModal();
+        }
+    }
+
     public static Parent loadPage(PageRoute route) {
         if (route.getFxmlPath() != null) {
             return load(route.getFxmlPath());
@@ -55,6 +75,9 @@ public final class ViewNavigator {
 
     private static void show(String fxmlPath, SceneGroup group) {
         ensureStage();
+        if (group != SceneGroup.MAIN) {
+            mainLayoutController = null;
+        }
         Parent root = load(fxmlPath);
         Scene scene = sceneFor(group, root);
         scene.setRoot(root);

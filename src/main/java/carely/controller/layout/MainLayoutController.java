@@ -1,5 +1,6 @@
 package carely.controller.layout;
 
+import carely.service.AuthSession;
 import carely.utils.PageRoute;
 import carely.utils.ViewNavigator;
 import javafx.animation.Interpolator;
@@ -22,6 +23,7 @@ public class MainLayoutController {
     private static final double SIDEBAR_WIDTH = 250;
     private static final double SIDEBAR_COLLAPSED_WIDTH = 0;
     private static final Duration SIDEBAR_ANIMATION_DURATION = Duration.millis(240);
+    private static final String EDGE_TO_EDGE_CONTENT_CLASS = "edge-to-edge-content";
 
     @FXML
     private BorderPane root;
@@ -31,6 +33,9 @@ public class MainLayoutController {
 
     @FXML
     private BorderPane mainRegion;
+
+    @FXML
+    private StackPane modalLayer;
 
     private SidebarController sidebarController;
 
@@ -46,6 +51,7 @@ public class MainLayoutController {
 
     @FXML
     private void initialize() {
+        ViewNavigator.registerMainLayoutController(this);
         loadShellControllers();
         sidebarController.setMainLayoutController(this);
         topbarController.setSidebarToggleHandler(this::toggleSidebar);
@@ -55,10 +61,38 @@ public class MainLayoutController {
     }
 
     public void navigateTo(PageRoute route) {
+        if (!canAccess(route)) {
+            ViewNavigator.showErrorDialog("Access denied", "You do not have permission to access this area.");
+            return;
+        }
+
         Parent page = ViewNavigator.loadPage(route);
+        contentPane.getStyleClass().remove(EDGE_TO_EDGE_CONTENT_CLASS);
+        if (route == PageRoute.PROFILE) {
+            contentPane.getStyleClass().add(EDGE_TO_EDGE_CONTENT_CLASS);
+        }
         contentPane.getChildren().setAll(page);
         sidebarController.setActiveRoute(route);
         topbarController.setCurrentPage(route.getTitle());
+    }
+
+    public void showGlobalModal(Node content) {
+        modalLayer.getChildren().setAll(content);
+        content.setVisible(true);
+        content.setManaged(true);
+        modalLayer.setVisible(true);
+        modalLayer.setManaged(true);
+        content.requestFocus();
+    }
+
+    public void hideGlobalModal() {
+        modalLayer.getChildren().clear();
+        modalLayer.setVisible(false);
+        modalLayer.setManaged(false);
+    }
+
+    private boolean canAccess(PageRoute route) {
+        return !route.isRestricted() || AuthSession.hasAnyRole(route.getAllowedRoles());
     }
 
     private void loadShellControllers() {

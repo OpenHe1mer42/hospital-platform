@@ -7,22 +7,37 @@ import carely.model.User;
 import carely.service.ProfileService;
 import carely.utils.BackgroundTasks;
 import carely.utils.ViewNavigator;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.input.ScrollEvent;
+import javafx.util.Duration;
 
 import java.time.format.DateTimeFormatter;
 
 public class ProfileController {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy");
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
+    private static final Duration SCROLL_ANIMATION_DURATION = Duration.millis(160);
 
     private final ProfileService profileService = new ProfileService();
+
+    private Timeline scrollAnimation;
+
+    @FXML
+    private ScrollPane profileScrollPane;
 
     @FXML
     private Label profileAvatarLabel;
@@ -93,6 +108,7 @@ public class ProfileController {
     @FXML
     private void initialize() {
         genderComboBox.setItems(FXCollections.observableArrayList("Female", "Male", "Non-binary", "Prefer not to say"));
+        configureSmoothScrolling();
         loadProfile();
     }
 
@@ -164,6 +180,48 @@ public class ProfileController {
                 () -> {
                 }
         );
+    }
+
+    private void configureSmoothScrolling() {
+        profileScrollPane.addEventFilter(ScrollEvent.SCROLL, event -> {
+            if (event.getDeltaY() == 0 || event.isShortcutDown()) {
+                return;
+            }
+
+            double scrollableHeight = getScrollableHeight();
+            if (scrollableHeight <= 0) {
+                return;
+            }
+
+            double targetValue = clamp(profileScrollPane.getVvalue() - (event.getDeltaY() / scrollableHeight));
+            animateScrollTo(targetValue);
+            event.consume();
+        });
+    }
+
+    private double getScrollableHeight() {
+        Node content = profileScrollPane.getContent();
+        Bounds viewportBounds = profileScrollPane.getViewportBounds();
+        if (content == null || viewportBounds == null) {
+            return 0;
+        }
+        return content.getBoundsInLocal().getHeight() - viewportBounds.getHeight();
+    }
+
+    private void animateScrollTo(double targetValue) {
+        if (scrollAnimation != null) {
+            scrollAnimation.stop();
+        }
+
+        scrollAnimation = new Timeline(new KeyFrame(
+                SCROLL_ANIMATION_DURATION,
+                new KeyValue(profileScrollPane.vvalueProperty(), targetValue, Interpolator.EASE_BOTH)
+        ));
+        scrollAnimation.play();
+    }
+
+    private double clamp(double value) {
+        return Math.max(0, Math.min(1, value));
     }
 
     private void renderUser(User user) {

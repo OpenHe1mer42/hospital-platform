@@ -400,6 +400,10 @@
     -fx-padding: 30 34;
 }
 
+.content-shell.edge-to-edge-content {
+    -fx-padding: 0;
+}
+
 .page-placeholder {
     -fx-background-color: transparent;
     -fx-padding: 0;
@@ -415,14 +419,47 @@
     -fx-background-color: transparent;
     -fx-background: transparent;
     -fx-border-color: transparent;
+    -fx-padding: 0;
 }
 
 .profile-page-scroll > .viewport {
     -fx-background-color: transparent;
 }
 
+.profile-page-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-padding: 0 3 0 0;
+    -fx-pref-width: 12;
+}
+
+.profile-page-scroll .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+}
+
+.profile-page-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: #cbd5e1;
+    -fx-background-radius: 999;
+}
+
+.profile-page-scroll .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #94a3b8;
+}
+
+.profile-page-scroll .scroll-bar:vertical .increment-button,
+.profile-page-scroll .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.profile-page-scroll .scroll-bar:vertical .increment-arrow,
+.profile-page-scroll .scroll-bar:vertical .decrement-arrow {
+    -fx-shape: "";
+    -fx-padding: 0;
+}
+
 .profile-page {
     -fx-background-color: transparent;
+    -fx-padding: 30 34;
 }
 
 .profile-hero {
@@ -557,4 +594,115 @@
 .danger-button:hover {
     -fx-background-color: #ffe4e6;
     -fx-border-color: #fda4af;
+}
+
+.doctors-page-root {
+    -fx-background-color: transparent;
+}
+
+.doctors-page {
+    -fx-fill-width: true;
+}
+
+.doctors-header {
+    -fx-min-height: 44;
+}
+
+.doctors-filter-panel {
+    -fx-padding: 14 16;
+}
+
+.filter-actions {
+    -fx-min-width: 330px;
+}
+
+.compact-button {
+    -fx-padding: 10 16;
+    -fx-font-size: 13px;
+}
+
+.doctors-table-panel {
+    -fx-padding: 0;
+}
+
+.global-modal-backdrop {
+    -fx-background-color: rgba(15, 23, 42, 0.32);
+    -fx-padding: 32;
+}
+
+.doctor-modal-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8;
+    -fx-border-color: #e5eaf2;
+    -fx-border-radius: 8;
+    -fx-padding: 24;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.18), 26, 0.16, 0, 12);
+}
+
+.modal-actions {
+    -fx-padding: 4 0 0 0;
+}
+
+.table-view,
+.doctors-table {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 7;
+    -fx-border-color: #e5eaf2;
+    -fx-border-radius: 7;
+    -fx-padding: 0;
+}
+
+.table-view .column-header-background,
+.doctors-table .column-header-background {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 7 7 0 0;
+}
+
+.table-view .column-header,
+.table-view .filler,
+.doctors-table .column-header,
+.doctors-table .filler {
+    -fx-background-color: transparent;
+}
+
+.table-view .table-cell,
+.doctors-table .table-cell {
+    -fx-padding: 10 12;
+    -fx-text-fill: #243044;
+    -fx-font-size: 13px;
+}
+
+.doctors-table .table-row-cell {
+    -fx-cell-size: 52px;
+}
+
+.doctors-table .table-row-cell:empty {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.doctors-table .table-row-cell:empty .table-cell {
+    -fx-border-color: transparent;
+}
+
+.table-action-button {
+    -fx-min-width: 36px;
+    -fx-min-height: 36px;
+    -fx-pref-width: 36px;
+    -fx-pref-height: 36px;
+    -fx-background-color: transparent;
+    -fx-background-radius: 12;
+    -fx-border-color: transparent;
+    -fx-border-radius: 12;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.table-action-button:hover {
+    -fx-background-color: #f5f8fc;
+    -fx-border-color: transparent;
+}
+
+.table-action-button:hover .svg-icon {
+    -fx-fill: #0f172a;
 }

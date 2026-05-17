@@ -14,7 +14,8 @@ import java.util.List;
 
 public class MigrationRunner {
     private static final List<String> MIGRATIONS = List.of(
-            "V004__create_current_schema.sql"
+            "V004__create_current_schema.sql",
+            "V005__seed_default_admin.sql"
     );
 
     public void runMigrations() {

@@ -18,9 +18,11 @@
 
 <ScrollPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
+            fx:id="profileScrollPane"
             fx:controller="carely.controller.pages.ProfileController"
             fitToWidth="true"
             hbarPolicy="NEVER"
+            pannable="true"
             styleClass="profile-page-scroll">
     <content>
         <VBox spacing="22" styleClass="profile-page">

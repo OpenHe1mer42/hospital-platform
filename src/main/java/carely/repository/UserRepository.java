@@ -14,6 +14,8 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -120,6 +122,49 @@ public class UserRepository {
         }
     }
 
+    public List<User> findByRole(UserRole role, String searchTerm, Boolean active) {
+        StringBuilder sql = new StringBuilder("""
+                SELECT id, full_name, email, password_hash, phone, gender, date_of_birth, role, is_active, created_at, updated_at
+                FROM users
+                WHERE role = ?
+                """);
+        List<Object> parameters = new ArrayList<>();
+        parameters.add(role.name());
+
+        if (searchTerm != null && !searchTerm.isBlank()) {
+            sql.append("""
+                      AND (LOWER(full_name) LIKE LOWER(?) OR LOWER(email) LIKE LOWER(?))
+                    """);
+            String likeTerm = "%" + searchTerm.trim() + "%";
+            parameters.add(likeTerm);
+            parameters.add(likeTerm);
+        }
+
+        if (active != null) {
+            sql.append("  AND is_active = ?\n");
+            parameters.add(active);
+        }
+
+        sql.append("ORDER BY full_name, email");
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+            for (int index = 0; index < parameters.size(); index++) {
+                statement.setObject(index + 1, parameters.get(index));
+            }
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<User> users = new ArrayList<>();
+                while (resultSet.next()) {
+                    users.add(mapRow(resultSet));
+                }
+                return users;
+            }
+        } catch (SQLException exception) {
+            throw new RepositoryException("Failed to load users by role.", exception);
+        }
+    }
+
     public User updateProfile(User user) {
         String sql = """
                 UPDATE users
@@ -148,6 +193,75 @@ public class UserRepository {
                     .orElseThrow(() -> new RepositoryException("Updated user could not be loaded."));
         } catch (SQLException exception) {
             throw new RepositoryException("Failed to update profile.", exception);
+        }
+    }
+
+    public User updateDoctor(User user, String passwordHash) {
+        String sql;
+        if (passwordHash == null || passwordHash.isBlank()) {
+            sql = """
+                    UPDATE users
+                    SET full_name = ?,
+                        email = ?,
+                        is_active = ?
+                    WHERE id = ?
+                      AND role = ?
+                    """;
+        } else {
+            sql = """
+                    UPDATE users
+                    SET full_name = ?,
+                        email = ?,
+                        password_hash = ?,
+                        is_active = ?
+                    WHERE id = ?
+                      AND role = ?
+                    """;
+        }
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, user.getFullName());
+            statement.setString(2, user.getEmail());
+            if (passwordHash == null || passwordHash.isBlank()) {
+                statement.setBoolean(3, user.isActive());
+                statement.setLong(4, user.getId());
+                statement.setString(5, UserRole.DOCTOR.name());
+            } else {
+                statement.setString(3, passwordHash);
+                statement.setBoolean(4, user.isActive());
+                statement.setLong(5, user.getId());
+                statement.setString(6, UserRole.DOCTOR.name());
+            }
+
+            if (statement.executeUpdate() == 0) {
+                throw new RepositoryException("Doctor could not be updated because the user was not found.");
+            }
+
+            return findById(connection, user.getId())
+                    .orElseThrow(() -> new RepositoryException("Updated doctor could not be loaded."));
+        } catch (SQLException exception) {
+            throw new RepositoryException("Failed to update doctor.", exception);
+        }
+    }
+
+    public void deleteDoctor(Long doctorId) {
+        String sql = """
+                DELETE FROM users
+                WHERE id = ?
+                  AND role = ?
+                """;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, doctorId);
+            statement.setString(2, UserRole.DOCTOR.name());
+
+            if (statement.executeUpdate() == 0) {
+                throw new RepositoryException("Doctor could not be deleted because the user was not found.");
+            }
+        } catch (SQLException exception) {
+            throw new RepositoryException("Failed to delete doctor.", exception);
         }
     }
 

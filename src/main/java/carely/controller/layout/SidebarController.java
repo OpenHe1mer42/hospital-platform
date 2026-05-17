@@ -1,5 +1,6 @@
 package carely.controller.layout;
 
+import carely.service.AuthSession;
 import carely.utils.AssetLoader;
 import carely.utils.PageRoute;
 import javafx.fxml.FXML;
@@ -30,7 +31,7 @@ public class SidebarController {
         brandIconSlot.getChildren().setAll(AssetLoader.imageView("logo.png", 30));
 
         for (PageRoute route : PageRoute.values()) {
-            if (!route.isSidebarVisible()) {
+            if (!route.isSidebarVisible() || !canAccess(route)) {
                 continue;
             }
             Button button = createNavButton(route);
@@ -77,5 +78,9 @@ public class SidebarController {
             }
         });
         return button;
+    }
+
+    private boolean canAccess(PageRoute route) {
+        return !route.isRestricted() || AuthSession.hasAnyRole(route.getAllowedRoles());
     }
 }

@@ -10,6 +10,6 @@ out/
 .idea/tasks.xml
 .idea/usage.statistics.xml
 .idea/shelf/
-
+scripts/
 .env
 .local-mariadb/
